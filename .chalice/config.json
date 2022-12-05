@@ -5,8 +5,10 @@
   "environment_variables": {
     "TELEGRAM_TOKEN": "",
     "CHATGPT_TOKEN": "",
-    "CHATGPT_SESSION_TOKEN": ""
+    "CHATGPT_SESSION_TOKEN": "",
+    "VOICE_MESSAGES_BUCKET": ""
   },
+  "lambda_timeout": 600,
   "stages": {
     "dev": {
       "api_gateway_custom_domain": {

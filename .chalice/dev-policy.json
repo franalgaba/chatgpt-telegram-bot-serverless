@@ -13,7 +13,9 @@
         {
             "Effect": "Allow",
             "Action": [
-                "lambda:UpdateFunctionConfiguration"
+                "lambda:UpdateFunctionConfiguration",
+                "transcribe:*",
+                "s3:*"
             ],
             "Resource": "*"
         }

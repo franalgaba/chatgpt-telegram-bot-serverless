@@ -6,7 +6,7 @@ This a Telegram bot that lets you chat with [ChatGPT](https://openai.com/blog/ch
 - [X] Markdown rendering support.
 - [X] Fully automated token refresh in the AWS Lambda.
 - [X] Conversation reset with `/reset` command.
-- [ ] Voice messages support (soon!).
+- [X] Voice messages support!
 
 # Initial Setup
 
@@ -17,9 +17,33 @@ This a Telegram bot that lets you chat with [ChatGPT](https://openai.com/blog/ch
 - For this go to [ChatGPT](https://chat.openai.com/chat)
 - Press F12, click on `session` and copy the contents of `__Secure-next-auth.session-token`.
 
+<details>
 [<img src="./img/session_token.png" width="500"/>](/img/session_token.png)
+</details>
 
-5. Go to `.chalice/config.json` and stablish the value of `TELEGRAM_TOKEN` with your Telegram token. Also stablish `CHATGPT_SESSION_TOKEN` with the value of your ChatGPT Token. Leave `CHATGPT_TOKEN` empty, it will be filled automatically by the function.
+5. To enable support for voice messages you need to create a S3 bucket in your AWS account.
+- Go to the top search bar and write `S3`.
+
+<details>
+[<img src="./img/s3_browser.png" width="500"/>](/img/s3_browser.png)
+</details>
+
+- Click the Create Bucket button.
+
+<details>
+[<img src="./img/create_bucket_button.png" width="500"/>](/img/create_bucket_button.png)
+</details>
+
+- Configure the creation of your bucket. The name must be unique worldwide. Scroll to bottom and click Create Bucket and don't change any other configuration.
+
+<details>
+[<img src="./img/create_bucket_config.png" width="500"/>](/img/create_bucket_config.png)
+</details>
+
+6. Go to `.chalice/config.json` and stablish the configurations:
+- `TELEGRAM_TOKEN` with your Telegram token. 
+- `CHATGPT_SESSION_TOKEN` with the value of your ChatGPT Token. Leave `CHATGPT_TOKEN` empty, it will be filled automatically by the function.
+- `VOICE_MESSAGES_BUCKET` with the bucket name you created previously.
 
 # Installation
 

@@ -40,6 +40,7 @@ class ChatGPT:
                         "CHATGPT_TOKEN": self.token,
                         "CHATGPT_SESSION_TOKEN": self.session_token,
                         "TELEGRAM_TOKEN": os.environ["TELEGRAM_TOKEN"],
+                        "VOICE_MESSAGES_BUCKET": os.environ["VOICE_MESSAGES_BUCKET"],
                     }
                 },
             )

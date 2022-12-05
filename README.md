@@ -26,7 +26,7 @@ This a Telegram bot that lets you chat with [ChatGPT](https://openai.com/blog/ch
 2. Go to the AWS Console -> Lambda -> <your_function_name> -> Configuration -> Function URL.
 3. Click Create Function URL and set Auth type to NONE.
 4. Copy the created function URL.
-5. Stablish your Telegram webhook to point to you AWS Lambda running `curl --request POST --url https://api.telegram.org/<YOUR_TELEGRAM_TOKEN>/setWebhook --header 'content-type: application/json' --data '{"url": "<YOUR_FUNCTION_URL"}'`
+5. Stablish your Telegram webhook to point to you AWS Lambda running `curl --request POST --url https://api.telegram.org/bot<YOUR_TELEGRAM_TOKEN>/setWebhook --header 'content-type: application/json' --data '{"url": "<YOUR_FUNCTION_URL"}'`
 
 Great! Everything is setup :) Now go to Telegram and find your bot name and use ChatGPT from there!
 

@@ -1,25 +1,55 @@
 import uuid
+import os
 import json
 
+import boto3
 import requests
 from loguru import logger
 
 
 class ChatGPT:
-    def __init__(self, token) -> None:
-        self.token = token
+    def __init__(self, session_token) -> None:
+        self.token = None
+        self.session_token = session_token
+        self.conversation_id = None
+        self.parent_id = str(uuid.uuid4())
+        self.lambda_client = boto3.client("lambda")
+        self.lambda_name = None
+
+    def set_lambda_name(self, name):
+        self.lambda_name = name
+
+    def reset_chat(self):
         self.conversation_id = None
         self.parent_id = str(uuid.uuid4())
 
     def _refresh_session(self):
-        response = requests.get(
-            "https://chat.openai.com/api/auth/session",
-        )
-        logger.info(response.text)
-        self.token = response.json()["accessToken"]
+        s = requests.Session()
+        # Set cookies
+        s.cookies.set("__Secure-next-auth.session-token", self.session_token)
+        response = s.get("https://chat.openai.com/api/auth/session")
+        try:
+            self.session_token = response.cookies.get(
+                "__Secure-next-auth.session-token"
+            )
+            self.token = response.json()["accessToken"]
+            self.lambda_client.update_function_configuration(
+                FunctionName=self.lambda_name,
+                Environment={
+                    "Variables": {
+                        "CHATGPT_TOKEN": self.token,
+                        "CHATGPT_SESSION_TOKEN": self.session_token,
+                        "TELEGRAM_TOKEN": os.environ["TELEGRAM_TOKEN"],
+                    }
+                },
+            )
+            logger.info("Session token updated!")
+        except Exception as e:
+            logger.error(e)
+            logger.error("Error refreshing session")
 
     def ask(self, text):
-        # self._refresh_session()
+        self._refresh_session()
 
         headers = {
             "Accept": "text/event-stream",
@@ -50,17 +80,19 @@ class ChatGPT:
             logger.info(e)
             raise e
 
-        logger.info(f"ChatGPT response non parsed: {response}")
-        response = response.text.splitlines()[-4]
-        logger.info(f"ChatGPT response parsed: {response}")
-        if "data: " in response:
-            single_response = json.loads(response[6:])
+        if response.status_code == 401:
+            message = (
+                "The token for your ChatGPT session expired! Please, get a new one."
+            )
         else:
-            single_response = json.loads(response)
-        logger.info(f"ChatGPT response: {single_response}")
-        self.parent_id = single_response["message"]["id"]
-        self.conversation_id = single_response["conversation_id"]
-        message = single_response["message"]["content"]["parts"][0]
-        logger.info(f"ChatGPT message: {message}")
+            response = response.text.splitlines()[-4]
+            if "data: " in response:
+                single_response = json.loads(response[6:])
+            else:
+                single_response = json.loads(response)
+            self.parent_id = single_response["message"]["id"]
+            self.conversation_id = single_response["conversation_id"]
+            message = single_response["message"]["content"]["parts"][0]
+            logger.info(f"ChatGPT message: {message}")
 
         return message

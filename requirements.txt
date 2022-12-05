@@ -2,3 +2,4 @@ requests
 python-telegram-bot==13.11
 loguru
 chalice
+boto3

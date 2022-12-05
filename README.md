@@ -2,6 +2,12 @@
 
 This a Telegram bot that lets you chat with [ChatGPT](https://openai.com/blog/chatgpt/). This bot is created using reverse engineering from the ChatGPT internal backend request to use the internal API endpoint. The Telegram bot is deployed in completely serverless in AWS Lambda. No need to setup a local server or do login in the browser.
 
+# Features
+- [X] Markdown rendering support.
+- [X] Fully automated token refresh in the AWS Lambda.
+- [X] Conversation reset with `/reset` command.
+- [ ] Voice messages support (soon!).
+
 # Initial Setup
 
 1. Create an [OpenAI account](https://openai.com/api/).
@@ -10,7 +16,10 @@ This a Telegram bot that lets you chat with [ChatGPT](https://openai.com/blog/ch
 4. Get your internal session token for ChatGPT:
 - For this go to [ChatGPT](https://chat.openai.com/chat)
 - Press F12, click on `session` and copy the contents of `accessToken`.
-5. Go to `.chalice/config.json` and stablish the value of `TELEGRAM_TOKEN` with your Telegram token. Also stablish `CHATGPT_TOKEN` with the value of your ChatGPT Token.
+
+[<img src="./img/session_token.png" width="500"/>](/img/session_token.png)
+
+5. Go to `.chalice/config.json` and stablish the value of `TELEGRAM_TOKEN` with your Telegram token. Also stablish `CHATGPT_SESSION_TOKEN` with the value of your ChatGPT Token. Leave `CHATGPT_TOKEN` empty, it will be filled automatically by the function.
 
 # Installation
 
@@ -29,11 +38,6 @@ This a Telegram bot that lets you chat with [ChatGPT](https://openai.com/blog/ch
 5. Stablish your Telegram webhook to point to you AWS Lambda running `curl --request POST --url https://api.telegram.org/bot<YOUR_TELEGRAM_TOKEN>/setWebhook --header 'content-type: application/json' --data '{"url": "<YOUR_FUNCTION_URL"}'`
 
 Great! Everything is setup :) Now go to Telegram and find your bot name and use ChatGPT from there!
-
-# Coming Features
-- [ ] Markdown rendering in Telegram.
-- [ ] Automatic ChatGPT token rotation.
-- [ ] Much more!
 
 # Credits
 

@@ -15,7 +15,7 @@ This a Telegram bot that lets you chat with [ChatGPT](https://openai.com/blog/ch
 3. Setup your Telegram bot. You can follow [this instructions](https://core.telegram.org/bots/tutorial#obtain-your-bot-token) to get your token.
 4. Get your internal session token for ChatGPT:
 - For this go to [ChatGPT](https://chat.openai.com/chat)
-- Press F12, click on `session` and copy the contents of `accessToken`.
+- Press F12, click on `session` and copy the contents of `__Secure-next-auth.session-token`.
 
 [<img src="./img/session_token.png" width="500"/>](/img/session_token.png)
 

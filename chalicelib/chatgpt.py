@@ -9,7 +9,7 @@ from loguru import logger
 
 class ChatGPT:
     def __init__(self, session_token) -> None:
-        self.token = None
+        self.token = ""
         self.session_token = session_token
         self.conversation_id = None
         self.parent_id = str(uuid.uuid4())
@@ -23,12 +23,21 @@ class ChatGPT:
         self.conversation_id = None
         self.parent_id = str(uuid.uuid4())
 
+    def _get_headers(self):
+        return {
+            "Referer": "https://chat.openai.com/chat",
+            "Origin": "https://chat.openai.com",
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.1 Safari/605.1.15",
+            "X-OpenAI-Assistant-App-Id": "",
+            "Accept": "text/event-stream",
+            "Authorization": f"Bearer {self.token}",
+            "Content-Type": "application/json",
+        }
+
     def _refresh_session(self):
         s = requests.Session()
         # Set cookies
-        headers = {
-            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36',
-        }
+        headers = self._get_headers()
         s.cookies.set("__Secure-next-auth.session-token", self.session_token)
         response = s.get("https://chat.openai.com/api/auth/session", headers=headers)
         try:
@@ -55,15 +64,7 @@ class ChatGPT:
     def ask(self, text):
         self._refresh_session()
 
-        headers = {
-            "Referer": "https://chat.openai.com/chat",
-            "Origin": "https://chat.openai.com",
-            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.1 Safari/605.1.15",
-            "X-OpenAI-Assistant-App-Id": "",
-            "Accept": "text/event-stream",
-            "Authorization": f"Bearer {self.token}",
-            "Content-Type": "application/json",
-        }
+        headers = self._get_headers()
         data = {
             "action": "next",
             "messages": [

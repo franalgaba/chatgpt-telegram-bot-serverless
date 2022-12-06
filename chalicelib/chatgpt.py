@@ -26,8 +26,11 @@ class ChatGPT:
     def _refresh_session(self):
         s = requests.Session()
         # Set cookies
+        headers = {
+            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36',
+        }
         s.cookies.set("__Secure-next-auth.session-token", self.session_token)
-        response = s.get("https://chat.openai.com/api/auth/session")
+        response = s.get("https://chat.openai.com/api/auth/session", headers=headers)
         try:
             self.session_token = response.cookies.get(
                 "__Secure-next-auth.session-token"

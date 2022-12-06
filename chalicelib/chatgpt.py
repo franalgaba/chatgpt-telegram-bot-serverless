@@ -53,6 +53,10 @@ class ChatGPT:
         self._refresh_session()
 
         headers = {
+            "Referer": "https://chat.openai.com/chat",
+            "Origin": "https://chat.openai.com",
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.1 Safari/605.1.15",
+            "X-OpenAI-Assistant-App-Id": "",
             "Accept": "text/event-stream",
             "Authorization": f"Bearer {self.token}",
             "Content-Type": "application/json",

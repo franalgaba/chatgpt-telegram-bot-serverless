@@ -2,15 +2,17 @@
 
 This a Telegram bot that lets you chat with [ChatGPT](https://openai.com/blog/chatgpt/). This bot is created using reverse engineering from the ChatGPT internal backend request to use the internal API endpoint. The Telegram bot is deployed in completely serverless in AWS Lambda. No need to setup a local server or do login in the browser.
 
+# Features
+
+- [X] __Voice messages support!__ :fire:
+- [X] __Markdown rendering__ support.
+- [X] Fully __automated token refresh__ in the AWS Lambda.
+- [X] __Conversation reset__ with `/reset` command.
+
+
 <p align="center">
     <img src="./img/chatgpt_animation_fast.gif.gif" width="500"/>
 </p>
-
-# Features
-- [X] Markdown rendering support.
-- [X] Fully automated token refresh in the AWS Lambda.
-- [X] Conversation reset with `/reset` command.
-- [X] Voice messages support!
 
 # Initial Setup
 

@@ -69,6 +69,12 @@ This a Telegram bot that lets you chat with [ChatGPT](https://openai.com/blog/ch
 
 Great! Everything is setup :) Now go to Telegram and find your bot name and use ChatGPT from there!
 
+# Coming soon!
+
+- [ ] Decoupled Token refresh in conversation.
+- [ ] Increase response performance.
+- [ ] Deploy solution with one-click using CloudFormation.
+
 # Credits
 
 -  [ChatGPT Telegram Bot - @altryne

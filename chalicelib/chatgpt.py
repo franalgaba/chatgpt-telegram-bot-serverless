@@ -96,7 +96,7 @@ class ChatGPT:
                 "The token for your ChatGPT session expired! Please, get a new one."
             )
         elif response.status_code >= 500:
-            message = "OpenAI's ChatGPT services are down. Please ask me again later :("
+            message = "OpenAI's ChatGPT services are down. Will try to answer as soon as possible"
         else:
             logger.info(response.status_code)
             logger.info(response.text)

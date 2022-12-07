@@ -8,9 +8,9 @@ from loguru import logger
 
 
 class ChatGPT:
-    def __init__(self, session_token) -> None:
-        self.token = ""
-        self.session_token = session_token
+    def __init__(self) -> None:
+        self.token = os.environ["CHATGPT_TOKEN"]
+        self.session_token = os.environ["CHATGPT_SESSION_TOKEN"]
         self.conversation_id = None
         self.parent_id = str(uuid.uuid4())
         self.lambda_client = boto3.client("lambda")
@@ -34,7 +34,7 @@ class ChatGPT:
             "Content-Type": "application/json",
         }
 
-    def _refresh_session(self):
+    def refresh_session(self):
         s = requests.Session()
         # Set cookies
         headers = self._get_headers()
@@ -62,7 +62,9 @@ class ChatGPT:
             logger.error("Error refreshing session")
 
     def ask(self, text):
-        self._refresh_session()
+
+        if self.token == "":
+            self.refresh_session()
 
         headers = self._get_headers()
         data = {
@@ -93,7 +95,11 @@ class ChatGPT:
             message = (
                 "The token for your ChatGPT session expired! Please, get a new one."
             )
+        elif response.status_code >= 500:
+            message = "OpenAI's ChatGPT services are down. Please ask me again later :("
         else:
+            logger.info(response.status_code)
+            logger.info(response.text)
             response = response.text.splitlines()[-4]
             if "data: " in response:
                 single_response = json.loads(response[6:])

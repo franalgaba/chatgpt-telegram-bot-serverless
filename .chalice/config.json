@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "app_name": "chatgpt-telegram-bot-lambda-test",
+  "app_name": "chatgpt-telegram-bot",
   "api_gateway_endpoint_type": "REGIONAL",
   "environment_variables": {
     "TELEGRAM_TOKEN": "",
@@ -11,9 +11,6 @@
   "lambda_timeout": 600,
   "stages": {
     "dev": {
-      "api_gateway_custom_domain": {
-        "domain_name": "api.chatgpt-telegram-bot.com"
-      },
       "api_gateway_stage": "api",
       "autogen_policy": false,
       "iam_policy_file": "dev-policy.json"

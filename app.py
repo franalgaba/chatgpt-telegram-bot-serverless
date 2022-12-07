@@ -1,5 +1,6 @@
 import os
 import json
+import traceback
 
 from loguru import logger
 from chalice import Chalice
@@ -10,6 +11,7 @@ from telegram.ext import (
     CommandHandler,
 )
 from telegram import ParseMode, Update, Bot
+from chalice.app import Rate
 
 from chalicelib.utils import generate_transcription, send_typing_action
 from chalicelib.chatgpt import ChatGPT
@@ -18,16 +20,19 @@ from chalicelib.chatgpt import ChatGPT
 TOKEN = os.environ["TELEGRAM_TOKEN"]
 
 # Chalice Lambda app
-app = Chalice(app_name="chatgpt-telegram-bot-lambda")
+
+APP_NAME = "chatgpt-telegram-bot"
+MESSAGE_HANDLER_LAMBDA = "message-handler-lambda"
+TOKEN_REFRESH_HANDLER_LAMBDA = "token-refresh-lambda"
+
+app = Chalice(app_name=APP_NAME)
 app.debug = True
+
+chat_gpt_message = ChatGPT()
 
 # Telegram bot
 bot = Bot(token=TOKEN)
 dispatcher = Dispatcher(bot, None, use_context=True)
-
-# ChatGPT handler class
-chat_gpt = ChatGPT(session_token=os.environ["CHATGPT_SESSION_TOKEN"])
-
 
 #####################
 # Telegram Handlers #
@@ -35,7 +40,7 @@ chat_gpt = ChatGPT(session_token=os.environ["CHATGPT_SESSION_TOKEN"])
 
 
 def reset(update, context) -> None:
-    chat_gpt.reset_chat()
+    chat_gpt_message.reset_chat()
     context.bot.send_message(
         chat_id=update.message.chat_id, text="Conversation has been reset!"
     )
@@ -51,7 +56,7 @@ def process_voice_message(update, context):
     file = bot.get_file(file_id)
     # Download the voice message file
     transcript_msg = generate_transcription(file)
-    message = chat_gpt.ask(transcript_msg)
+    message = chat_gpt_message.ask(transcript_msg)
 
     chat_id = update.message.chat_id
     context.bot.send_message(
@@ -67,8 +72,10 @@ def process_message(update, context):
     chat_text = update.message.text
 
     try:
-        response_msg = chat_gpt.ask(chat_text)
-    except Exception:
+        response_msg = chat_gpt_message.ask(chat_text)
+    except Exception as e:
+        app.log.error(e)
+        app.log.error(traceback.format_exc())
         context.bot.send_message(
             chat_id=chat_id,
             text="There was an exception handling your message :(",
@@ -87,10 +94,33 @@ def process_message(update, context):
 ############################
 
 
-@app.lambda_function()
-def index(event, context):
+@app.schedule(Rate(5, unit=Rate.MINUTES), name=TOKEN_REFRESH_HANDLER_LAMBDA)
+def token_handler(event):
 
-    chat_gpt.set_lambda_name(context.function_name)
+    # ChatGPT handler class
+    chat_gpt_token = ChatGPT()
+
+    # Refresh token for the message handler Lambda
+    message_handler_lambda_name = "-".join([APP_NAME, "dev", MESSAGE_HANDLER_LAMBDA])
+    token_handler_lambda_name = "-".join(
+        [APP_NAME, "dev", TOKEN_REFRESH_HANDLER_LAMBDA]
+    )
+
+    app.log.info(f"Refreshing token for Lambda: {message_handler_lambda_name}")
+    chat_gpt_token.set_lambda_name(message_handler_lambda_name)
+    chat_gpt_token.refresh_session()
+
+    app.log.info(f"Update token handler for Lambda: {token_handler_lambda_name}")
+    # Refresh token for the token refresh handler Lambda
+    chat_gpt_token.set_lambda_name(token_handler_lambda_name)
+    chat_gpt_token.refresh_session()
+
+
+@app.lambda_function(name=MESSAGE_HANDLER_LAMBDA)
+def message_handler(event, context):
+
+    # ChatGPT handler class
+    chat_gpt_message.set_lambda_name(context.function_name)
 
     dispatcher.add_handler(MessageHandler(Filters.text, process_message))
     dispatcher.add_handler(CommandHandler("reset", reset, filters=Filters.command))

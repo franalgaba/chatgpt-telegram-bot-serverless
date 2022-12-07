@@ -11,7 +11,7 @@ This a Telegram bot that lets you chat with [ChatGPT](https://openai.com/blog/ch
 
 
 <p align="center">
-    <img src="./img/chatgpt_animation_fast.gif.gif" width="500"/>
+    <img src="./img/chatgpt_animation_fast.gif" width="500"/>
 </p>
 
 # Initial Setup
@@ -62,7 +62,7 @@ This a Telegram bot that lets you chat with [ChatGPT](https://openai.com/blog/ch
 # Deployment
 
 1. Run `chalice deploy`.
-2. Go to the AWS Console -> Lambda -> <your_function_name> -> Configuration -> Function URL.
+2. Go to the AWS Console -> Lambda -> chatgpt-telegram-bot-dev-message-handler-lambda -> Configuration -> Function URL.
 3. Click Create Function URL and set Auth type to NONE.
 4. Copy the created function URL.
 5. Stablish your Telegram webhook to point to you AWS Lambda running `curl --request POST --url https://api.telegram.org/bot<YOUR_TELEGRAM_TOKEN>/setWebhook --header 'content-type: application/json' --data '{"url": "<YOUR_FUNCTION_URL"}'`
@@ -71,8 +71,9 @@ Great! Everything is setup :) Now go to Telegram and find your bot name and use 
 
 # Coming soon!
 
-- [ ] Decoupled Token refresh in conversation.
-- [ ] Increase response performance.
+- [X] Decoupled Token refresh in conversation.
+- [X] Increase response performance.
+- [X] Error handling from ChatGPT services.
 - [ ] Deploy solution with one-click using CloudFormation.
 
 # Credits

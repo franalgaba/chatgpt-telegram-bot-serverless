@@ -4,3 +4,4 @@ loguru
 chalice
 boto3
 wget
+openai

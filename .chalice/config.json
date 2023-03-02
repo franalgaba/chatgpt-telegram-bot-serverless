@@ -4,8 +4,7 @@
   "api_gateway_endpoint_type": "REGIONAL",
   "environment_variables": {
     "TELEGRAM_TOKEN": "",
-    "CHATGPT_TOKEN": "",
-    "CHATGPT_SESSION_TOKEN": "",
+    "OPENAI_API_KEY": "",
     "VOICE_MESSAGES_BUCKET": ""
   },
   "lambda_timeout": 600,

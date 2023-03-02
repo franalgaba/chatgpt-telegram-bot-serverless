@@ -1,14 +1,12 @@
 # ChatGPT Telegram Bot in AWS Lambda
 
-This a Telegram bot that lets you chat with [ChatGPT](https://openai.com/blog/chatgpt/). This bot is created using reverse engineering from the ChatGPT internal backend request to use the internal API endpoint. The Telegram bot is deployed in completely serverless in AWS Lambda. No need to setup a local server or do login in the browser.
+This a Telegram bot that lets you chat with [ChatGPT](https://openai.com/blog/chatgpt/). This bot is created using the [__brand new ChatGPT API__](https://openai.com/blog/introducing-chatgpt-and-whisper-apis). The Telegram bot is deployed in completely serverless in AWS Lambda. No need to setup a local server or do login in the browser.
 
 # Features
 
+- [X] __New ChatGPT API support.__ :brain:
 - [X] __Voice messages support!__ :fire:
-- [X] __Markdown rendering__ support.
-- [X] Fully __automated token refresh__ in the AWS Lambda.
-- [X] __Conversation reset__ with `/reset` command.
-
+- [X] __Markdown rendering support.__
 
 <p align="center">
     <img src="./img/chatgpt_animation_fast.gif" width="500"/>
@@ -16,7 +14,7 @@ This a Telegram bot that lets you chat with [ChatGPT](https://openai.com/blog/ch
 
 # Initial Setup
 
-1. Create an [OpenAI account](https://openai.com/api/).
+1. Create an [OpenAI account](https://openai.com/api/) and [get an API Key](https://platform.openai.com/account/api-keys).
 2. Create an [AWS account](https://aws.amazon.com/es/).
 3. Setup your Telegram bot. You can follow [this instructions](https://core.telegram.org/bots/tutorial#obtain-your-bot-token) to get your token.
 4. Get your internal session token for ChatGPT:
@@ -48,7 +46,7 @@ This a Telegram bot that lets you chat with [ChatGPT](https://openai.com/blog/ch
 
 6. Go to `.chalice/config.json` and stablish the configurations:
 - `TELEGRAM_TOKEN` with your Telegram token. 
-- `CHATGPT_SESSION_TOKEN` with the value of your ChatGPT Token. Leave `CHATGPT_TOKEN` empty, it will be filled automatically by the function.
+- `OPENAI_API_KEY` with the value of your Open AI API Token.
 - `VOICE_MESSAGES_BUCKET` with the bucket name you created previously.
 
 # Installation

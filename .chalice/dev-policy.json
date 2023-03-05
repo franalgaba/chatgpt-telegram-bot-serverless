@@ -1,23 +1,24 @@
 {
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Action": [
-                "logs:CreateLogGroup",
-                "logs:CreateLogStream",
-                "logs:PutLogEvents"
-            ],
-            "Resource": "arn:*:logs:*:*:*"
-        },
-        {
-            "Effect": "Allow",
-            "Action": [
-                "lambda:UpdateFunctionConfiguration",
-                "transcribe:*",
-                "s3:*"
-            ],
-            "Resource": "*"
-        }
-    ]
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+      ],
+      "Resource": "arn:*:logs:*:*:*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": ["lambda:UpdateFunctionConfiguration", "transcribe:*", "s3:*"],
+      "Resource": "*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": ["dynamodb:*"],
+      "Resource": ["arn:aws:dynamodb:ca-central-1:343747809041:table/message"]
+    }
+  ]
 }

@@ -3,9 +3,7 @@
   "app_name": "chatgpt-telegram-bot",
   "api_gateway_endpoint_type": "REGIONAL",
   "environment_variables": {
-    "TELEGRAM_TOKEN": "",
-    "OPENAI_API_KEY": "",
-    "VOICE_MESSAGES_BUCKET": ""
+    "SECRET_ARN": "arn:aws:secretsmanager:ca-central-1:343747809041:secret:chat_telegram_bot-Gc6EZu"
   },
   "lambda_timeout": 600,
   "stages": {

@@ -19,6 +19,11 @@
       "Effect": "Allow",
       "Action": ["dynamodb:*"],
       "Resource": ["arn:aws:dynamodb:ca-central-1:343747809041:table/message"]
+    },
+    {
+      "Effect": "Allow",
+      "Action": ["secretsmanager:GetSecretValue"],
+      "Resource": "*"
     }
   ]
 }

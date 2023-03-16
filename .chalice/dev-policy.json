@@ -18,7 +18,7 @@
     {
       "Effect": "Allow",
       "Action": ["dynamodb:*"],
-      "Resource": ["arn:aws:dynamodb:ca-central-1:343747809041:table/message"]
+      "Resource": ["arn:aws:dynamodb:ca-central-1:343747809041:table/*"]
     },
     {
       "Effect": "Allow",

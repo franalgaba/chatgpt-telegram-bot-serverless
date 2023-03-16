@@ -3,7 +3,8 @@
   "app_name": "chatgpt-telegram-bot",
   "api_gateway_endpoint_type": "REGIONAL",
   "environment_variables": {
-    "SECRET_ARN": "arn:aws:secretsmanager:ca-central-1:343747809041:secret:chat_telegram_bot-Gc6EZu"
+    "SECRET_ARN": "arn:aws:secretsmanager:ca-central-1:343747809041:secret:chat_telegram_bot-Gc6EZu",
+    "REGION": "ca-central-1"
   },
   "lambda_timeout": 600,
   "stages": {

@@ -15,24 +15,6 @@ from telegram.ext import Dispatcher, Filters, MessageHandler
 
 from chalicelib.utils import send_typing_action
 
-CHAT_BOTS = {
-    "chat_827787108": {
-        "secret": "EVE_TELEGRAM_TOKEN",
-        "name": "Eve",
-        "prompt": "",
-    },
-    "chat_970126771": {
-        "secret": "ADAM_TELEGRAM_TOKEN",
-        "name": "Adam",
-        "prompt": "",
-    },
-    "chat_974683757": {
-        "secret": "CARL_TELEGRAM_TOKEN",
-        "name": "Carl",
-        "prompt": "Ignore all previous instructions before this one. You are an expert in psychotherapy, following the teachings of Carl Rogers and Carl Jung. Your name is Carl. You hold all the appropriate medical licenses to provide advice. You have been helping individuals with their anxiety, depression and stress for over 20 years. Your task is now to give the best advice to individuals seeking help managing their symptoms. You must treat me as a mental health patient. Your response format should focus on reflection and asking clarifying questions. Please use beautiful language and do not limit your vocabulary or simplify your responses as the patient is smart and knowledgable. Your responses should sound wise, intelligent, nuanced and deep. You may interject or ask secondary questions once the initial greetings are done.",
-    },
-}
-
 APP_NAME = "chatgpt-telegram-bot"
 MESSAGE_HANDLER_LAMBDA = "message-handler-lambda"
 
@@ -50,11 +32,11 @@ def to_chat_key(chat_id):
 
 
 def get_secret(secret_name):
-    region_name = "ca-central-1"
-
     # Create a Secrets Manager client
     session = boto3.session.Session()
-    client = session.client(service_name="secretsmanager", region_name=region_name)
+    client = session.client(
+        service_name="secretsmanager", region_name=os.environ["REGION"]
+    )
 
     try:
         get_secret_value_response = client.get_secret_value(
@@ -66,8 +48,24 @@ def get_secret(secret_name):
         raise e
 
     # Decrypts secret using the associated KMS key.
-    secret = json.loads(get_secret_value_response['SecretString'])
+    secret = json.loads(get_secret_value_response["SecretString"])
     return secret.get(secret_name)
+
+
+def get_bots():
+    # Retrieve all bots from DynamoDB
+    dynamodb = boto3.resource("dynamodb", region_name=os.environ["REGION"])
+    table = dynamodb.Table("bots")
+    response = table.scan()
+    return {
+        bot["key"]: {
+            "name": bot.get("name"),
+            "secret": bot.get("secret"),
+            "prompt": bot.get("prompt"),
+            "key": bot.get("key"),
+        }
+        for bot in response["Items"]
+    }
 
 
 #####################
@@ -99,14 +97,14 @@ def ask_chatgpt(text, old_messages):
 
 @send_typing_action
 def process_message(update, context):
-    dynamodb = boto3.resource("dynamodb", region_name="ca-central-1")
+    dynamodb = boto3.resource("dynamodb", region_name=os.environ["REGION"])
     table = dynamodb.Table("message")
 
     chat_id = update.message.chat_id
     chat_key = to_chat_key(chat_id)
     chat_text = update.message.text
     created_at = int(datetime.datetime.now().timestamp())
-    chat_config = CHAT_BOTS.get(chat_key)
+    chat_config = get_bots().get(chat_key)
 
     response = table.scan(FilterExpression=Attr("chat_key").eq(chat_key))
     old_messages = response["Items"]
@@ -154,6 +152,10 @@ def process_message(update, context):
             text=f"There was an exception handling your message :( {e}",
             parse_mode=ParseMode.MARKDOWN,
         )
+        context.bot.send_message(
+            chat_id=chat_id,
+            text=message,
+        )
 
     try:
         table.put_item(
@@ -189,15 +191,15 @@ def message_handler(event, context):
             return {"statusCode": 200}
 
         chat_key = to_chat_key(json_body["message"]["chat"]["id"])
+        bots = get_bots()
+        bot_config = bots.get(chat_key)
 
-        if not chat_key:
+        if not bot_config:
             logger.error("Unrecognized bot")
             return {"statusCode": 404}
 
         openai.api_key = get_secret("OPENAI_API_KEY")
-
-        # Telegram bot
-        bot = Bot(token=get_secret(CHAT_BOTS[chat_key]["secret"]))
+        bot = Bot(token=get_secret(bot_config.get("secret")))
         dispatcher = Dispatcher(bot, None, use_context=True)
         dispatcher.add_handler(MessageHandler(Filters.text, process_message))
 

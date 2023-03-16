@@ -106,16 +106,20 @@ def process_message(update, context):
     created_at = int(datetime.datetime.now().timestamp())
     chat_config = get_bots().get(chat_key)
 
-    response = table.scan(FilterExpression=Attr("chat_key").eq(chat_key))
+    response = table.scan(
+        FilterExpression=Attr("chat_key").eq(chat_key) & Attr("archived").eq(False)
+    )
     old_messages = response["Items"]
 
     if chat_text == "/clear":
         for message in old_messages:
-            table.delete_item(
+            table.update_item(
                 Key={
                     "message_key": message["message_key"],
                     "created_at": message["created_at"],
-                }
+                },
+                UpdateExpression="set archived = :val",
+                ExpressionAttributeValues={":val": True},
             )
         context.bot.send_message(
             chat_id=chat_id,
@@ -131,6 +135,7 @@ def process_message(update, context):
             "role": "user",
             "text": chat_text,
             "created_at": created_at,
+            "archived": False,
         }
     )
 

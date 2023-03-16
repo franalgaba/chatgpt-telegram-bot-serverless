@@ -3,4 +3,4 @@ def test_addition():
 
 
 def test_subtraction():
-    assert 5 - 2 == 2
+    assert 5 - 3 == 2

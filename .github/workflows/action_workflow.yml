@@ -11,15 +11,10 @@ jobs:
       - uses: actions/checkout@main
       - name: Install dependencies
         run: |
-          python -m venv venv
-          source venv/bin/activate
-          pip install -r backend/chalice/requirements.txt
-          pip install pytest
-      - name: Run pytest
-        run: |
-          source venv/bin/activate
-          pytest
-          if [ $? -ne 0 ]; then exit 1; fi
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Run tests with pytest
+        run: pytest -c pytest.ini
       - name: Chalice deploy
         uses: jayef0/chalice-extended-action@release-v0.2.1
         env:

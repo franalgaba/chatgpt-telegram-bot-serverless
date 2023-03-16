@@ -5,3 +5,4 @@ chalice
 boto3
 wget
 openai
+pytest

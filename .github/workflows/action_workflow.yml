@@ -9,7 +9,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@main
-      - name: chalice deploy
+      - name: Install dependencies
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          pip install -r backend/chalice/requirements.txt
+          pip install pytest
+      - name: Run pytest
+        run: |
+          source venv/bin/activate
+          pytest
+          if [ $? -ne 0 ]; then exit 1; fi
+      - name: Chalice deploy
         uses: jayef0/chalice-extended-action@release-v0.2.1
         env:
           WORKING_DIRECTORY: backend/chalice

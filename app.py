@@ -149,7 +149,7 @@ def process_message(update, context):
         app.log.error(traceback.format_exc())
         context.bot.send_message(
             chat_id=chat_id,
-            text=f"There was an exception handling your message :( {e}",
+            text=f"There was an error handling your message :( {e}",
             parse_mode=ParseMode.MARKDOWN,
         )
         context.bot.send_message(

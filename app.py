@@ -170,6 +170,7 @@ def process_message(update, context):
                 "role": "assistant",
                 "text": message,
                 "created_at": created_at,
+                "archived": False,
             }
         )
     except Exception as e:

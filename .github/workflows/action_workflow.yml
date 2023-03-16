@@ -1,0 +1,21 @@
+on:
+  push:
+    branches:
+      - main
+name: Deploy branch to Chalice
+jobs:
+  deploy:
+    name: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@main
+      - name: chalice deploy
+        uses: jayef0/chalice-extended-action@release-v0.2.1
+        env:
+          WORKING_DIRECTORY: backend/chalice
+          REQUIREMENTS_FILE: requirements.txt
+          OPERATION: deploy
+          STAGE: dev
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ca-central-1

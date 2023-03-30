@@ -4,5 +4,5 @@ loguru
 chalice
 boto3
 wget
-openai
+openai==0.27.2
 pytest

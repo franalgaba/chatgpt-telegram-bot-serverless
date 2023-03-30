@@ -82,7 +82,7 @@ def ask_chatgpt(text, old_messages):
         for message in old_messages
     ]
     message = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
+        model="gpt-4",
         messages=formatted_old_messages
         + [
             {
@@ -140,7 +140,7 @@ def process_message(update, context):
     )
 
     if chat_config.get("prompt"):
-        old_messages.insert(0, {"role": "user", "text": chat_config["prompt"]})
+        old_messages.insert(0, {"role": "system", "text": chat_config["prompt"]})
 
     try:
         message = ask_chatgpt(chat_text, old_messages)

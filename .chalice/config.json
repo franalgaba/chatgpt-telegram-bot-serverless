@@ -11,7 +11,8 @@
     "dev": {
       "api_gateway_stage": "api",
       "autogen_policy": false,
-      "iam_policy_file": "dev-policy.json"
+      "iam_policy_file": "dev-policy.json",
+      "runtime": "python3.10"
     }
   }
 }

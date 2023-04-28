@@ -6,3 +6,5 @@ boto3
 wget
 openai==0.27.2
 pytest
+pydub
+elevenlabs

@@ -1,6 +1,7 @@
 import datetime
 import json
 import os
+import subprocess
 import traceback
 import uuid
 
@@ -9,14 +10,20 @@ import openai
 from boto3.dynamodb.conditions import Attr
 from botocore.exceptions import ClientError
 from chalice import Chalice
+from elevenlabs import generate, play, save
+from elevenlabs import set_api_key as set_eleven_api_key
 from loguru import logger
 from telegram import Bot, ParseMode, Update
 from telegram.ext import Dispatcher, Filters, MessageHandler
 
 from chalicelib.utils import send_typing_action
 
+os.environ["PATH"] += os.pathsep + os.path.dirname(os.path.realpath(__file__))
+
 APP_NAME = "chatgpt-telegram-bot"
 MESSAGE_HANDLER_LAMBDA = "message-handler-lambda"
+LOCAL_AUDIO_DOWNLOAD_PATH = "/tmp/input_voice_message.ogg"
+LOCAL_AUDIO_CONVERTED_PATH = "/tmp/output_voice_message.mp3"
 
 app = Chalice(app_name=APP_NAME)
 app.debug = True
@@ -183,6 +190,50 @@ def process_message(update, context):
         )
 
 
+def ffmpeg_convert(input_file, output_file):
+    cmd = f"ffmpeg -i {input_file} {output_file}"
+    subprocess.run(cmd, shell=True, check=True)
+
+
+LOCAL_AUDIO_DOWNLOAD_PATH = "/tmp/input_voice_message.ogg"
+LOCAL_AUDIO_CONVERTED_PATH = "/tmp/input_voice_message.mp3"
+LOCAL_AUDIO_OUTPUT_PATH = "/tmp/output_voice_message.wav"
+LOCAL_AUDIO_OUTPUT_CONVERTED_PATH = "/tmp/output_voice_message.ogg"
+
+
+@send_typing_action
+def process_voice_message(update, context):
+    # Get the voice message from the update object
+    voice_message = update.message.voice
+    # Get the file ID of the voice message
+    file_id = voice_message.file_id
+    # Use the file ID to get the voice message file from Telegram
+    file = context.bot.get_file(file_id)
+    file.download(LOCAL_AUDIO_DOWNLOAD_PATH)
+    # Now convert to mp3
+    ffmpeg_convert(LOCAL_AUDIO_DOWNLOAD_PATH, LOCAL_AUDIO_CONVERTED_PATH)
+
+    # Download the voice message file
+    with open(LOCAL_AUDIO_CONVERTED_PATH, "rb") as audio_file:
+        transcript = openai.Audio.transcribe("whisper-1", audio_file)
+    # Now send the transcript to elevenlabs to get the audio response
+    set_eleven_api_key()
+
+    audio_bytes = generate(
+        text=transcript,
+        api_key=get_secret("ELEVENLABS_KEY"),
+        voice="Bella",
+    )
+
+    save(audio_bytes, filename=LOCAL_AUDIO_OUTPUT_PATH)
+    # Now convert to ogg, jesus what a mess
+    ffmpeg_convert(LOCAL_AUDIO_OUTPUT_PATH, LOCAL_AUDIO_OUTPUT_CONVERTED_PATH)
+
+    # Send the final ogg file back to Telegram
+    with open(LOCAL_AUDIO_OUTPUT_CONVERTED_PATH, "rb") as audio_file:
+        context.bot.send_voice(chat_id=update.message.chat_id, voice=audio_file)
+
+
 ############################
 # Lambda Handler functions #
 ############################
@@ -208,6 +259,7 @@ def message_handler(event, context):
         bot = Bot(token=get_secret(bot_config.get("secret")))
         dispatcher = Dispatcher(bot, None, use_context=True)
         dispatcher.add_handler(MessageHandler(Filters.text, process_message))
+        dispatcher.add_handler(MessageHandler(Filters.voice, process_voice_message))
 
         dispatcher.process_update(Update.de_json(json_body, bot))
     except Exception as e:

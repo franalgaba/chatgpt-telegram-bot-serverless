@@ -1,6 +1,7 @@
 {
   "version": "2.0",
   "app_name": "chatgpt-telegram-bot",
+  "layers": ["arn:aws:lambda:ca-central-1:343747809041:layer:ffmpeg:1"],
   "api_gateway_endpoint_type": "REGIONAL",
   "environment_variables": {
     "SECRET_ARN": "arn:aws:secretsmanager:ca-central-1:343747809041:secret:chat_telegram_bot-Gc6EZu",

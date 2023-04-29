@@ -191,7 +191,7 @@ def process_message(update, context):
 
 
 def ffmpeg_convert(input_file, output_file):
-    cmd = f"ffmpeg -i {input_file} {output_file}"
+    cmd = f"/opt/bin/ffmpeg -i {input_file} {output_file}"
     subprocess.run(cmd, shell=True, check=True)
 
 

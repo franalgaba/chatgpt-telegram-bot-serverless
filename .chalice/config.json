@@ -3,6 +3,7 @@
   "app_name": "chatgpt-telegram-bot",
   "layers": ["arn:aws:lambda:ca-central-1:343747809041:layer:ffmpeg:1"],
   "api_gateway_endpoint_type": "REGIONAL",
+  "automatic_layer": true,
   "environment_variables": {
     "SECRET_ARN": "arn:aws:secretsmanager:ca-central-1:343747809041:secret:chat_telegram_bot-Gc6EZu",
     "REGION": "ca-central-1"
@@ -13,7 +14,7 @@
       "api_gateway_stage": "api",
       "autogen_policy": false,
       "iam_policy_file": "dev-policy.json",
-      "runtime": "python3.10"
+      "runtime": "python3.9"
     }
   }
 }

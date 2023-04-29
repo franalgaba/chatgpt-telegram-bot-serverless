@@ -12,7 +12,7 @@
     },
     {
       "Effect": "Allow",
-      "Action": ["lambda:UpdateFunctionConfiguration", "transcribe:*", "s3:*"],
+      "Action": ["lambda:UpdateFunctionConfiguration", "s3:*"],
       "Resource": "*"
     },
     {
@@ -23,6 +23,11 @@
     {
       "Effect": "Allow",
       "Action": ["secretsmanager:GetSecretValue"],
+      "Resource": "*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": ["lambda:InvokeFunction"],
       "Resource": "*"
     }
   ]

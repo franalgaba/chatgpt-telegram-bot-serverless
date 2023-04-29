@@ -216,8 +216,6 @@ def process_voice_message(update, context):
     # Download the voice message file
     with open(LOCAL_AUDIO_CONVERTED_PATH, "rb") as audio_file:
         transcript = openai.Audio.transcribe("whisper-1", audio_file)
-    # Now send the transcript to elevenlabs to get the audio response
-    set_eleven_api_key()
 
     audio_bytes = generate(
         text=transcript,

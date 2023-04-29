@@ -70,6 +70,7 @@ def get_bots():
             "secret": bot.get("secret"),
             "prompt": bot.get("prompt"),
             "key": bot.get("key"),
+            "voice": bot.get("voice"),
         }
         for bot in response["Items"]
     }
@@ -133,6 +134,15 @@ def handle_database_and_chatgpt(chat_id, chat_text, voice=False):
         FilterExpression=Attr("chat_key").eq(chat_key) & Attr("archived").eq(False)
     )
     old_messages = response["Items"]
+
+    # Check if the newest message is over 1 day old and clear chat history if needed
+    if old_messages:
+        newest_message_time = max(message["created_at"] for message in old_messages)
+        time_diff = created_at - newest_message_time
+        one_day = 86400  # Number of seconds in a day
+        if time_diff > one_day:
+            clear_chat_history(chat_id)
+            old_messages = []
 
     # Store user message
     table.put_item(

@@ -20,7 +20,8 @@ jobs:
         run: pytest -c pytest.ini
       - name: Chalice deploy
         run: |
-          pip install -r requirements.txt -t ./vendor
+          pip install -r requirements.txt
+          pip install --target=./vendor frozenlist==1.3.3 multidict==6.0.4 yarl==1.9.2 aiohttp==3.8.4
           chalice deploy --stage dev
         env:
           WORKING_DIRECTORY: backend/chalice

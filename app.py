@@ -5,10 +5,8 @@ import subprocess
 import traceback
 import uuid
 
-import boto3
 import openai
 from boto3.dynamodb.conditions import Attr
-from botocore.exceptions import ClientError
 from chalice import Chalice
 from elevenlabs import generate, save
 from loguru import logger
@@ -27,100 +25,6 @@ LOCAL_AUDIO_CONVERTED_PATH = "/tmp/output_voice_message.mp3"
 
 app = Chalice(app_name=APP_NAME)
 app.debug = True
-
-
-def message_guid():
-    """Generate a random guid for message key"""
-    return str(uuid.uuid4())
-
-
-def to_chat_key(chat_id):
-    return f"chat_{str(chat_id).replace('-', '')}"
-
-
-def get_secret(secret_name):
-    # Create a Secrets Manager client
-    session = boto3.session.Session()
-    client = session.client(
-        service_name="secretsmanager", region_name=os.environ["REGION"]
-    )
-
-    try:
-        get_secret_value_response = client.get_secret_value(
-            SecretId=os.environ["SECRET_ARN"]
-        )
-    except ClientError as e:
-        # For a list of exceptions thrown, see
-        # https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_GetSecretValue.html
-        raise e
-
-    # Decrypts secret using the associated KMS key.
-    secret = json.loads(get_secret_value_response["SecretString"])
-    return secret.get(secret_name)
-
-
-def get_bots():
-    # Retrieve all bots from DynamoDB
-    dynamodb = boto3.resource("dynamodb", region_name=os.environ["REGION"])
-    table = dynamodb.Table("bots")
-    response = table.scan()
-    return {
-        bot["key"]: {
-            "name": bot.get("name"),
-            "secret": bot.get("secret"),
-            "prompt": bot.get("prompt"),
-            "key": bot.get("key"),
-            "voice": bot.get("voice"),
-        }
-        for bot in response["Items"]
-    }
-
-
-#####################
-# Telegram Handlers #
-#####################
-
-
-def ask_chatgpt(text, old_messages):
-    formatted_old_messages = [
-        {
-            "role": message.get("role"),
-            "content": message.get("text"),
-        }
-        for message in old_messages
-    ]
-    message = openai.ChatCompletion.create(
-        model="gpt-4",
-        messages=formatted_old_messages
-        + [
-            {
-                "role": "assistant",
-                "content": text,
-            },
-        ],
-    )
-    logger.info(message)
-    return message["choices"][0]["message"]["content"]
-
-
-def clear_chat_history(chat_id):
-    dynamodb = boto3.resource("dynamodb", region_name=os.environ["REGION"])
-    table = dynamodb.Table("message")
-    chat_key = to_chat_key(chat_id)
-    response = table.scan(
-        FilterExpression=Attr("chat_key").eq(chat_key) & Attr("archived").eq(False)
-    )
-    old_messages = response["Items"]
-
-    for message in old_messages:
-        table.update_item(
-            Key={
-                "message_key": message["message_key"],
-                "created_at": message["created_at"],
-            },
-            UpdateExpression="set archived = :val",
-            ExpressionAttributeValues={":val": True},
-        )
 
 
 def handle_database_and_chatgpt(chat_id, chat_text, voice=False):

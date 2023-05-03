@@ -1,218 +1,91 @@
-import datetime
 import json
 import os
-import subprocess
+import sys
 import traceback
-import uuid
+from pathlib import Path
 
+import boto3
 import openai
-from boto3.dynamodb.conditions import Attr
 from chalice import Chalice
-from elevenlabs import generate, save
 from loguru import logger
-from telegram import Bot, ParseMode, Update
+from telegram import Bot, Update
 from telegram.ext import Dispatcher, Filters, MessageHandler
 
+from chalicelib.ai.ai_service import AIService
+from chalicelib.audio.audio_service import AudioService
+from chalicelib.bot.bot_service import BotService
+from chalicelib.config.config_service import ConfigService
+from chalicelib.message.message_service import MessageService
+from chalicelib.telegram.telegram_service import TelegramService
 from chalicelib.utils import send_typing_action
 
-os.environ["PATH"] += os.pathsep + os.path.dirname(os.path.realpath(__file__))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 APP_NAME = "chatgpt-telegram-bot"
 MESSAGE_HANDLER_LAMBDA = "message-handler-lambda"
 MESSAGE_PROCESS_LAMBDA = "message-process-lambda"
-LOCAL_AUDIO_DOWNLOAD_PATH = "/tmp/input_voice_message.ogg"
-LOCAL_AUDIO_CONVERTED_PATH = "/tmp/output_voice_message.mp3"
 
 app = Chalice(app_name=APP_NAME)
 app.debug = True
 
-
-def handle_database_and_chatgpt(chat_id, chat_text, voice=False):
-    dynamodb = boto3.resource("dynamodb", region_name=os.environ["REGION"])
-    table = dynamodb.Table("message")
-    chat_key = to_chat_key(chat_id)
-    created_at = int(datetime.datetime.now().timestamp())
-    chat_config = get_bots().get(chat_key)
-
-    response = table.scan(
-        FilterExpression=Attr("chat_key").eq(chat_key) & Attr("archived").eq(False)
-    )
-    old_messages = response["Items"]
-
-    # Check if the newest message is over 1 day old and clear chat history if needed
-    if old_messages:
-        newest_message_time = max(message["created_at"] for message in old_messages)
-        time_diff = created_at - newest_message_time
-        one_day = 86400  # Number of seconds in a day
-        if time_diff > one_day:
-            clear_chat_history(chat_id)
-            old_messages = []
-
-    # Store user message
-    table.put_item(
-        Item={
-            "message_key": message_guid(),
-            "chat_key": chat_key,
-            "role": "user",
-            "text": chat_text,
-            "created_at": created_at,
-            "archived": False,
-        }
-    )
-
-    prompt = chat_config["prompt"]
-    if prompt:
-        if voice:
-            prompt = f"{prompt}. Your response will be converted to audio, please limit your response to 100 characters and only use words and symbols that can be read aloud."
-
-        old_messages.insert(0, {"role": "system", "text": prompt})
-
-    message = ask_chatgpt(chat_text, old_messages)
-
-    # Store assistant message
-    table.put_item(
-        Item={
-            "message_key": message_guid(),
-            "chat_key": chat_key,
-            "role": "assistant",
-            "text": message,
-            "created_at": created_at,
-            "archived": False,
-        }
-    )
-
-    return message
+ai_service = AIService()
+message_service = MessageService()
+audio_service = AudioService()
+bot_service = BotService()
+config_service = ConfigService()
 
 
 @send_typing_action
 def process_message(update, context):
     chat_id = update.message.chat_id
     chat_text = update.message.text
+    telegram_service = TelegramService(context)
 
     if chat_text == "/clear":
-        clear_chat_history(chat_id)
-        context.bot.send_message(
-            chat_id=chat_id,
-            text="Chat cleared",
-            parse_mode=ParseMode.MARKDOWN,
-        )
+        message_service.clear_chat_history(chat_id)
+        telegram_service.send_chat_message(chat_id, "Chat cleared")
         return
 
     try:
-        message = handle_database_and_chatgpt(chat_id, chat_text)
-        context.bot.send_message(
-            chat_id=chat_id,
-            text=message,
-            parse_mode=ParseMode.MARKDOWN,
-        )
+        message = ai_service.orchestrate_message(chat_id, chat_text)
+        telegram_service.send_chat_message(chat_id, message)
     except Exception as e:
         app.log.error(e)
         app.log.error(traceback.format_exc())
-        context.bot.send_message(
-            chat_id=chat_id,
-            text=f"There was an error handling your message :( {e}",
-            parse_mode=ParseMode.MARKDOWN,
+        telegram_service.send_chat_message(
+            chat_id, f"There was an error handling your message :( {e}"
         )
 
 
-def ffmpeg_convert(input_file, output_file):
-    output_extension = output_file.split(".")[-1]
-
-    if output_extension == "ogg":
-        audio_codec = "-c:a libopus"
-    else:
-        audio_codec = ""
-
-    command = f"ffmpeg -i {input_file} {audio_codec} {output_file}"
-    subprocess.run(command, shell=True)
-
-
-def ffprobe_get_duration(file_path):
-    command = [
-        "/opt/bin/ffprobe",
-        "-v",
-        "error",
-        "-show_entries",
-        "format=duration",
-        "-of",
-        "json",
-        file_path,
-    ]
-    result = subprocess.run(
-        command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
-    )
-    output = json.loads(result.stdout)
-
-    return float(output["format"]["duration"])
-
-
-def remove_file(file_path):
-    if os.path.exists(file_path):
-        os.remove(file_path)
-    else:
-        print(f"The file {file_path} does not exist.")
-
-
-LOCAL_AUDIO_DOWNLOAD_PATH = "/tmp/input_voice_message.ogg"
-LOCAL_AUDIO_CONVERTED_PATH = "/tmp/input_voice_message.mp3"
-LOCAL_AUDIO_OUTPUT_PATH = "/tmp/output_voice_message.wav"
-LOCAL_AUDIO_OUTPUT_CONVERTED_PATH = "/tmp/output_voice_message.ogg"
-
-
+@send_typing_action
 def process_voice_message(update, context):
+    telegram_service = TelegramService(context)
     try:
-        # Get the voice message from the update object
-        voice_message = update.message.voice
-        # Get the file ID of the voice message
-        file_id = voice_message.file_id
-        # Use the file ID to get the voice message file from Telegram
-        file = context.bot.get_file(file_id)
-        file.download(LOCAL_AUDIO_DOWNLOAD_PATH)
-        # Now convert to mp3
-        ffmpeg_convert(LOCAL_AUDIO_DOWNLOAD_PATH, LOCAL_AUDIO_CONVERTED_PATH)
-
-        # Download the voice message file
-        with open(LOCAL_AUDIO_CONVERTED_PATH, "rb") as audio_file:
-            transcript_response = openai.Audio.transcribe("whisper-1", audio_file)
-            logger.info("transcript complete", transcript_response)
-
         chat_id = update.message.chat_id
-        chat_text = transcript_response.get("text")
-        bots = get_bots()
-        bot_config = bots.get(to_chat_key(chat_id)) or {}
+        chat_key = message_service.to_chat_key(chat_id)
 
-        response_message = handle_database_and_chatgpt(chat_id, chat_text, voice=True)
+        file = telegram_service.get_audio_message(update)
 
-        audio_bytes = generate(
-            text=response_message,
-            api_key=get_secret("ELEVENLABS_KEY"),
-            voice=bot_config.get("voice", "Bella"),
+        transcript_response = audio_service.transcribe_audio(file)
+
+        response_message = ai_service.orchestrate_message(
+            chat_id, transcript_response, voice=True
         )
 
-        save(audio_bytes, filename=LOCAL_AUDIO_OUTPUT_PATH)
-        # Now convert to ogg, jesus what a mess
-        ffmpeg_convert(LOCAL_AUDIO_OUTPUT_PATH, LOCAL_AUDIO_OUTPUT_CONVERTED_PATH)
+        bot = bot_service.get_bot(chat_key)
 
-        # Send the final ogg file back to Telegram
-        with open(LOCAL_AUDIO_OUTPUT_CONVERTED_PATH, "rb") as audio_file:
-            duration = int(ffprobe_get_duration(LOCAL_AUDIO_OUTPUT_CONVERTED_PATH))
-            context.bot.send_voice(
-                chat_id=update.message.chat_id, voice=audio_file, duration=duration
-            )
+        audio_file_path, duration = audio_service.generate_audio_file(
+            response_message, voice=bot.get("voice")
+        )
+        telegram_service.send_voice_message(chat_id, audio_file_path, duration)
     except Exception as e:
         logger.error(e)
         logger.error(traceback.format_exc())
-        context.bot.send_message(
-            chat_id=update.message.chat_id,
-            text=f"There was an error processing your voice message :( {e}",
-            parse_mode=ParseMode.MARKDOWN,
+        telegram_service.send_chat_message(
+            chat_id, f"There was an error processing your voice message :( {e}"
         )
     finally:
-        # Delete the files
-        remove_file(LOCAL_AUDIO_DOWNLOAD_PATH)
-        remove_file(LOCAL_AUDIO_CONVERTED_PATH)
-        remove_file(LOCAL_AUDIO_OUTPUT_PATH)
-        remove_file(LOCAL_AUDIO_OUTPUT_CONVERTED_PATH)
+        audio_service.clean_up()
 
 
 ############################
@@ -243,16 +116,15 @@ def message_process(event, context):
         if not json_body.get("message"):
             return
 
-        chat_key = to_chat_key(json_body["message"]["chat"]["id"])
-        bots = get_bots()
-        bot_config = bots.get(chat_key)
+        chat_key = message_service.to_chat_key(json_body["message"]["chat"]["id"])
+        bot_config = bot_service.get_bot(chat_key)
 
         if not bot_config:
             logger.error("Unrecognized bot")
             return
 
-        openai.api_key = get_secret("OPENAI_API_KEY")
-        bot = Bot(token=get_secret(bot_config.get("secret")))
+        openai.api_key = config_service.get_secret("OPENAI_API_KEY")
+        bot = Bot(token=config_service.get_secret(bot_config.get("secret")))
         dispatcher = Dispatcher(bot, None, use_context=True)
         dispatcher.add_handler(MessageHandler(Filters.text, process_message))
         dispatcher.add_handler(MessageHandler(Filters.voice, process_voice_message))

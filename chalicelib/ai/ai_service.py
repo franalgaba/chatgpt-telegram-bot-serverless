@@ -35,13 +35,13 @@ class AIService:
         chat_key = self.message_service.to_chat_key(chat_id)
         old_messages = self.message_service.fetch_old_messages(chat_id)
 
-        self.message_service.store_message(chat_id, user_message)
+        self.message_service.store_message(chat_id, user_message, "user")
 
-        prompt = self.bot_service.get_prompt(chat_key, voice)
+        prompt = self.bot_service.get_chat_prompt(chat_key, voice)
         old_messages.insert(0, {"role": "system", "text": prompt})
 
         response_message = self.ask_chatgpt(user_message, old_messages)
 
-        self.message_service.store_message(chat_id, response_message)
+        self.message_service.store_message(chat_id, response_message, "assistant")
 
         return response_message

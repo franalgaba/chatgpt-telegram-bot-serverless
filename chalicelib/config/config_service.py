@@ -6,6 +6,7 @@ from botocore.exceptions import ClientError
 
 
 class ConfigService:
+    @staticmethod
     def get_secret(secret_name):
         # Create a Secrets Manager client
         session = boto3.session.Session()

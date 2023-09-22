@@ -17,18 +17,15 @@ This a Telegram bot that lets you chat with [ChatGPT](https://openai.com/blog/ch
 1. Create an [OpenAI account](https://openai.com/api/) and [get an API Key](https://platform.openai.com/account/api-keys).
 2. Create an [AWS account](https://aws.amazon.com/es/).
 3. Setup your Telegram bot. You can follow [this instructions](https://core.telegram.org/bots/tutorial#obtain-your-bot-token) to get your token.
-4. Get your internal session token for ChatGPT:
-
-- For this go to [ChatGPT](https://chat.openai.com/chat)
-- Press F12, click on `session` and copy the contents of `__Secure-next-auth.session-token`.
 
 <details>
 [<img src="./img/session_token.png" width="500"/>](/img/session_token.png)
 </details>
 
-5. To enable support for voice messages you need to create a S3 bucket in your AWS account.
 
+4. To enable support for voice messages you need to create a S3 bucket in your AWS account.
 - Go to the top search bar and write `S3`.
+
 
 <details>
 [<img src="./img/s3_browser.png" width="500"/>](/img/s3_browser.png)
@@ -46,9 +43,9 @@ This a Telegram bot that lets you chat with [ChatGPT](https://openai.com/blog/ch
 [<img src="./img/create_bucket_config.png" width="500"/>](/img/create_bucket_config.png)
 </details>
 
-6. Go to `.chalice/config.json` and stablish the configurations:
 
-- `TELEGRAM_TOKEN` with your Telegram token.
+5. Go to `.chalice/config.json` and stablish the configurations:
+- `TELEGRAM_TOKEN` with your Telegram token. 
 - `OPENAI_API_KEY` with the value of your Open AI API Token.
 - `VOICE_MESSAGES_BUCKET` with the bucket name you created previously.
 
@@ -67,6 +64,7 @@ This a Telegram bot that lets you chat with [ChatGPT](https://openai.com/blog/ch
 3. Click Create Function URL and set Auth type to NONE.
 4. Copy the created function URL.
 5. Establish your Telegram webhook to point to you AWS Lambda running `curl --request POST --url https://api.telegram.org/bot<YOUR_TELEGRAM_TOKEN>/setWebhook --header 'content-type: application/json' --data '{"url": "<YOUR_FUNCTION_URL"}'`
+
 
 Great! Everything is setup :) Now go to Telegram and find your bot name and use ChatGPT from there!
 

@@ -26,7 +26,7 @@ APP_NAME = "chatgpt-telegram-bot"
 MESSAGE_HANDLER_LAMBDA = "message-handler-lambda"
 
 app = Chalice(app_name=APP_NAME)
-# بدلاً من السطر القديم، ضع هذا الكود لحماية البيانات
+
 app.debug = os.environ.get("CHALICE_DEBUG", "False").lower() in ("true", "1", "yes")
 
 

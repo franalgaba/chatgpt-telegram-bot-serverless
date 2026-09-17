@@ -26,7 +26,9 @@ APP_NAME = "chatgpt-telegram-bot"
 MESSAGE_HANDLER_LAMBDA = "message-handler-lambda"
 
 app = Chalice(app_name=APP_NAME)
-app.debug = True
+
+app.debug = os.environ.get("CHALICE_DEBUG", "False").lower() in ("true", "1", "yes")
+
 
 # Telegram bot
 bot = Bot(token=TOKEN)
